@@ -1,4 +1,5 @@
-package reona
+//go:build exclude
+package skiplist
 
 import (
 	"cmp"
@@ -88,14 +89,14 @@ func (sl *SkipList[K, V]) IsEmpty() bool {
 
 // Front returns the entry with the smallest key.
 func (sl *SkipList[K, V]) Front() (*Node[K, V], bool) {
-	return sl.nextNode(&sl.head, newUnbound[K]())
+	return sl.nextNode(&sl.head, reona.newUnbound[K]())
 }
 
 // Returns the successor of a node.
 //
 // This will keep searching until a non-deleted node is found. If a deleted
 // node is reached then a search is performed using the given key.
-func (sl *SkipList[K, V]) nextNode(pred *Tower[K, V], lowerBounder bounder[K]) (*Node[K, V], bool) {
+func (sl *SkipList[K, V]) nextNode(pred *Tower[K, V], lowerBounder reona.bounder[K]) (*Node[K, V], bool) {
 	// Load the level 0 successor of the current node.
 	curr := pred.pointers[0].Load()
 	// FIXME: may pred be deleted? If so, what should we do?
@@ -132,7 +133,7 @@ func (sl *SkipList[K, V]) nextNode(pred *Tower[K, V], lowerBounder bounder[K]) (
 // If `upper_bound == true`: the last node less than (or equal to) the key.
 //
 // If `upper_bound == false`: the first node greater than (or equal to) the key.
-func (sl *SkipList[K, V]) searchBound(bounder bounder[K], upperBound bool) (*Node[K, V], bool) {
+func (sl *SkipList[K, V]) searchBound(bounder reona.bounder[K], upperBound bool) (*Node[K, V], bool) {
 	panic("implement me")
 }
 
