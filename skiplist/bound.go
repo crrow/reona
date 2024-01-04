@@ -1,4 +1,6 @@
-package reona
+//go:build exclude
+
+package skiplist
 
 // TODO: GET RID OF IT, very disgusting
 

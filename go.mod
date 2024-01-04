@@ -1,4 +1,4 @@
-module reona
+module github.com/crrow/reona
 
 go 1.21
 

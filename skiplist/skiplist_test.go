@@ -1,4 +1,6 @@
-package reona
+//go:build exclude
+
+package skiplist
 
 import (
 	"fmt"
