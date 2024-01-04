@@ -87,7 +87,7 @@ func (l *LinkedList[K, V]) Remove(k K) bool {
 		}
 
 		if curNode.key == k && curNode.active.Load() {
-			if curNode.active.CompareAndSwap(true, false) {
+			if !curNode.active.CompareAndSwap(true, false) {
 				return false
 			}
 

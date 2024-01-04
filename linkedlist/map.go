@@ -2,23 +2,21 @@ package linkedlist
 
 import (
 	"cmp"
-	"hash/maphash"
-	"sync/atomic"
-	"unsafe"
-
+	"fmt"
 	"github.com/crrow/reona/util"
+	"sync/atomic"
 )
 
 type Map[K cmp.Ordered, V any] struct {
-	bSize uint64
-	size  atomic.Uint64
-	mp    []*LinkedList[K, V]
-	seed  maphash.Seed
+	bSize  uint64
+	size   atomic.Uint64
+	mp     []*LinkedList[K, V]
+	hasher func(K) uintptr
 }
 
 func NewMap[K cmp.Ordered, V any](opts ...util.Option[Map[K, V]]) *Map[K, V] {
 	var r = new(Map[K, V])
-	r.seed = maphash.MakeSeed()
+	r.hasher = util.GetHasher[K]()
 	util.ApplyOptions[Map[K, V]](r, opts...)
 	return r
 }
@@ -41,14 +39,16 @@ func (m *Map[K, V]) IsEmpty() bool {
 }
 
 func (m *Map[K, V]) Insert(k K, v V) {
-	ndx := m.calculateHash(k) % m.bSize
+	ndx := uint64(m.hasher(k)) % m.bSize
 	m.mp[ndx].Insert(k, v)
 	m.size.Add(1)
+	fmt.Printf("insert %v, index: %d \n", k, ndx)
 }
 
 func (m *Map[K, V]) Get(k K) (*V, bool) {
-	ndx := m.calculateHash(k) % m.bSize
+	ndx := uint64(m.hasher(k)) % m.bSize
 	r := m.mp[ndx].Get(k)
+	fmt.Printf("try get %v, index: %d \n", k, ndx)
 	if r == nil {
 		return nil, false
 	}
@@ -56,11 +56,14 @@ func (m *Map[K, V]) Get(k K) (*V, bool) {
 }
 
 func (m *Map[K, V]) Remove(k K) bool {
-	ndx := m.calculateHash(k) % m.bSize
-	return m.mp[ndx].Remove(k)
-}
-
-func (m *Map[K, V]) calculateHash(v any) uint64 {
-	s := unsafe.Slice((*byte)(unsafe.Pointer(&v)), unsafe.Sizeof(v))
-	return maphash.Bytes(m.seed, s)
+	ndx := uint64(m.hasher(k)) % m.bSize
+	fmt.Printf("try remove %v, index: %d \n", k, ndx)
+	if m.mp[ndx].Remove(k) {
+		var cur = m.size.Load()
+		for !m.size.CompareAndSwap(cur, cur-1) {
+			cur = m.size.Load()
+		}
+		return true
+	}
+	return false
 }
